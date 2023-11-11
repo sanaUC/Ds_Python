@@ -9,6 +9,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
+import hashlib
+
+countries = ["None","companies_of_South_Korea","companies_in_the_United_Kingdom","Polish_companies","Australian_companies","Swedish_companies","companies_of_the_United_Arab_Emirates","German_companies","companies_in_Canada","Italian_companies","companies_in_Belgium"]
+coluselect = ["Rank","Forbes 2000 rank","Assets(billions US$)","Profit(billions US$)","Value(billions US$)","Revenue(billions US$)",]
+
+
+global t1
+global t2
+global ind
+
 
 ### Check if file exist and add first lign in it
 if os.path.exists(r"C:\test\enregistrement") :
@@ -34,23 +44,10 @@ def caesartoalpha () :
 def caesartoascii () :
     menucaesarfunction.place_forget()
     caesar_ascii.place(relx=0.5 , rely=0.5 , anchor=tkinter.CENTER)
-def datatodict() :
-    with open("fromagenew.txt", "r") as f:
-        lines = f.readlines()
-    data = []
-    for line in lines:
-        line = line.split()
-        data.append(line)    
-    dataset = {}
-    for value in data:
-        key = value[0]
-        value = value[1:]
-        dataset[key] = value
-    CTkMessagebox(title="Dataset To Dict", message=dataset)
-    
+
 def datatofigure () :
-    menudatasetfunction.place_forget()
-    menudatasetfigure.place(relx= 0.5 ,rely=0.5 , anchor=tkinter.CENTER)
+    home.place_forget()
+    datasetnum2.place(relx= 0.5 ,rely=0.5 , anchor=tkinter.CENTER)
 def back8() :
     menuhashfunction.place_forget()
     home.place(relx=0.5 , rely=0.5 , anchor = tkinter.CENTER)
@@ -69,12 +66,10 @@ def back6() :
 def back7() :
     caesar_ascii.place_forget()
     menucaesarfunction.place(relx=0.5 , rely=0.5 , anchor = tkinter.CENTER)
-def back13() :
-    menudatasetfunction.place_forget()
-    home.place(relx=0.5 , rely=0.5 , anchor = tkinter.CENTER)
-def back14() :
-    menudatasetfigure.place_forget()
-    menudatasetfunction.place(relx=0.5 , rely=0.5 , anchor = tkinter.CENTER)    
+
+def back15() :
+    datasetnum2.place_forget()
+    home.place(relx=0.5 , rely=0.5 , anchor = tkinter.CENTER)          
 def btnfhere() :
     login.place_forget()
     registerframe.place(relx=0.5 , rely=0.5 , anchor=tkinter.CENTER) 
@@ -110,7 +105,7 @@ def qrframetohome() :
     home.place(relx=0.5 , rely=0.5 , anchor = tkinter.CENTER)
 def hometodataset () :
     home.place_forget()
-    menudatasetfunction.place(relx=0.5 , rely=0.5 , anchor = tkinter.CENTER)
+    datasetnum2.place(relx=0.5 , rely=0.5 , anchor = tkinter.CENTER)
 
 
 # System settings
@@ -125,6 +120,130 @@ my_image = ImageTk.PhotoImage(Image.open('bgp2.jpg'))
 button = customtkinter.CTkLabel(app, image=my_image ,)
 button.pack()
 
+## show for a single dataset 
+def submit2 (df,choix1,choix2) :
+
+    if choix1 == 'Rank' or choix1 == 'Profit(billions US$)' or choix1 == 'Revenue(billions US$)' or choix1 == 'Assets(billions US$)' or choix1 == 'Value(billions US$)' or choix1 == 'Forbes 2000 rank' :
+        df[choix1] = pd.to_numeric(df[choix1], errors='coerce')
+    if choix2 == 'Rank' or choix2 == 'Profit(billions US$)' or choix2 == 'Revenue(billions US$)' or choix2 == 'Assets(billions US$)' or choix2 == 'Value(billions US$)' or choix2 == 'Forbes 2000 rank' :
+        df[choix2] = pd.to_numeric(df[choix2], errors='coerce')
+    
+    df.plot(kind='bar', x=choix1, y=choix2)
+    plt.title('Bar Plot')
+    plt.xlabel(choix1)
+    plt.ylabel(choix2)
+    plt.show()
+    df.to_csv(r'C:\Users\sickn\OneDrive\Desktop\Project python DS\DsPython\Companies.csv', index = False)
+    dict = df.to_dict(orient='records')
+    print(dict)
+    CTkMessagebox(title="Result", message="Look at the terminal to consult the dict")
+
+## First button to choose which countries to consult in dataset
+def submit1() :
+    df1 = pd.DataFrame()
+    df2 = pd.DataFrame()
+    if choix1.get() == "None" and choix11.get() == "None":
+        CTkMessagebox(title="Error", message="Choose at least a country")
+    if choix1.get() != "None" :
+        df1 =  datafetch(choix1.get())
+    if choix11.get() != "None" :
+        df2 =  datafetch(choix11.get())    
+
+
+    if not df2.empty and not df1.empty :
+
+        Industry = ['None','Banking','Services','Retail','Insurance','Mining','Real estate','Advertising','Consumer goods','Oil and Gas','Chemicals']
+        concatenated_df = pd.concat([df1 , df2], ignore_index=True)
+
+        choix9 = customtkinter.CTkOptionMenu(datasetnum2 ,values=t2 , )
+        choix9.place(y=170 , x=70)        
+        choix10 = customtkinter.CTkOptionMenu(datasetnum2 ,values=coluselect , )
+        choix10.place(y=200 , x=70)
+        choix20 = customtkinter.CTkOptionMenu(datasetnum2 ,values=Industry , )
+        choix20.place(y=230 , x=70)
+
+        sorted_df = concatenated_df.sort_values(by="Forbes 2000 rank",ascending=False)
+        global ind  
+        ind = choix20.get()
+        btn21 = customtkinter.CTkButton(datasetnum2 ,text="Change Industry" ,command=lambda: submit3(sorted_df,choix9.get(),choix10.get(),choix20.get()))
+        btn21.place(y=260 , x=70) 
+
+
+    if df1.empty :
+        choix9 = customtkinter.CTkOptionMenu(datasetnum2 ,values=t2 , )
+        choix9.place(y=170 , x=70)        
+        choix10 = customtkinter.CTkOptionMenu(datasetnum2 ,values=coluselect , )
+        choix10.place(y=200 , x=70)
+        btn2 = customtkinter.CTkButton(datasetnum2 ,text="show the diagram" ,command=lambda: submit2(df2,choix9.get(),choix10.get()) )
+        btn2.place(y=230 , x=70)                
+    if df2.empty :
+        choix9 = customtkinter.CTkOptionMenu(datasetnum2 ,values=t2 , )
+        choix9.place(y=170 , x=70)        
+        choix10 = customtkinter.CTkOptionMenu(datasetnum2 ,values=coluselect , )
+        choix10.place(y=200 , x=70)
+        btn2 = customtkinter.CTkButton(datasetnum2 ,text="show the diagram" ,command=lambda: submit2(df1,choix9.get(),choix10.get()) )
+        btn2.place(y=230 , x=70) 
+
+
+
+def datafetch (x) :
+    url = "https://en.wikipedia.org/wiki/List_of_largest_" + x
+    page =  requests.get(url)
+    soup = BeautifulSoup(page.text , 'html')
+    i = -1
+    #to get the right table
+    leave = False
+    while leave == False :
+        i+=1
+        table = soup.find_all('table')[i]
+        columntitles = table.find_all('th')
+        for title in columntitles :
+            if title.text.strip() == 'Forbes 2000 rank':
+                leave = True
+    columntitle = []
+    colchoix1 = []
+
+
+    for title in columntitles :
+        columntitle.append(title.text.strip())
+        if title.text.strip() == 'Name' or title.text.strip() == 'Headquarters' or title.text.strip() == 'Industry' :
+            colchoix1.append(title.text.strip())
+    
+    global t1 , t2
+    t1 = columntitle
+    t2 = colchoix1
+    columndatas = table.find_all('tr')
+    df = pd.DataFrame(columns = columntitle)
+    for ligne in columndatas[1:]:
+        ligne = ligne.find_all('td')
+        lignedata = []
+        for data in ligne :
+            lignedata.append(data.text.strip()) 
+        length = len(df)
+        df.loc[length] = lignedata 
+
+    return df
+
+### show for multiple dataset with or without specifications
+def submit3 (df,choix1,choix2, x) :
+    
+    if choix1 == 'Rank' or choix1 == 'Profit(billions US$)' or choix1 == 'Revenue(billions US$)' or choix1 == 'Assets(billions US$)' or choix1 == 'Value(billions US$)' or choix1 == 'Forbes 2000 rank' :
+        df[choix1] = pd.to_numeric(df[choix1], errors='coerce')
+    if choix2 == 'Rank' or choix2 == 'Profit(billions US$)' or choix2 == 'Revenue(billions US$)' or choix2 == 'Assets(billions US$)' or choix2 == 'Value(billions US$)' or choix2 == 'Forbes 2000 rank' :
+        df[choix2] = pd.to_numeric(df[choix2], errors='coerce')
+    if x != 'None' :
+        df = df[df['Industry'] == x]
+
+    df.plot(kind='bar', x=choix1, y=choix2 ,)
+    plt.title('Bar Plot')
+    plt.xlabel(choix1)
+    plt.ylabel(choix2)
+    plt.show()
+    df.to_csv(r'C:\Users\sickn\OneDrive\Desktop\Project python DS\DsPython\Companies.csv', index = False)
+    dict = df.to_dict(orient='records')
+    print(dict)
+    CTkMessagebox(title="Result", message="Look at the terminal to consult the dict")
+
 ### Attack by dictionnaire btn
 def submitABD () :
     file = open('dictexemple.txt',"r")
@@ -138,53 +257,7 @@ def submitABD () :
         else :
             CTkMessagebox(title="ABD", message="not included in dict") 
 
-def caloriesbycheese () :
-    with open("fromagenew.txt", "r") as f:
-        lines = f.readlines()
-    data = []
-    for line in lines:
-        line = line.split()
-        data.append(line)    
-    dataset = {}
-    for value in data:
-        key = value[0]
-        value = value[1:]
-        dataset[key] = value
-    df = pd.DataFrame(dataset)
-    fig1, ax1 = plt.subplots()
-    canvas1 = FigureCanvasTkAgg(fig1,master=menudatasetfigure)
-    ax1.barh(df["Fromage"], df["Calories"])
-    ax1.set_title("Calories by Cheese")
-    ax1.set_xlabel("Cheese")
-    ax1.set_ylabel("Calories")
-    canvas1.draw()
-    canvas1.get_tk_widget().place(relx=0.5, rely=0.20 , width=600 ,height=400)   
-    
 
-def caloriesbycheese1():
-    
-    with open("fromagenew.txt", "r") as f:
-        lines = f.readlines()
-    data = []
-    for line in lines:
-        line = line.split()
-        data.append(line)    
-    dataset = {}
-    for value in data:
-        key = value[0]
-        value = value[1:]
-        dataset[key] = value
-    df = pd.DataFrame(dataset)
-    fig2, ax2 = plt.subplots()
-    canvas2 = FigureCanvasTkAgg(fig2,master=menudatasetfigure)
-    ax2.barh(df["Fromage"], df["Sodium"])
-    ax2.set_title("Sodium by Cheese")
-    ax2.set_xlabel("Cheese")
-    ax2.set_ylabel("Sodium")
-    canvas2.draw()
-    canvas2.get_tk_widget().place(relx=0.05, rely=0.2 , width=600 , height=400 )  
-    
-    
     
 def submithash256 () :
     if not msg.get()== "" :
@@ -509,25 +582,23 @@ qrframe_label.place(x=25 , y=50)
 btn_qrframe = customtkinter.CTkButton(master=qrframe , width=220 , text="Go to Home" , corner_radius=8 , command=qrframetohome)
 btn_qrframe.place(x=30 , y=270)
 
-##############################
-## Menu du dataset
-##############################
 
-menudatasetfunction = customtkinter.CTkFrame(master=button , width=280 ,height=330, corner_radius=16 ,)
-btnmenudata1 = customtkinter.CTkButton(master=menudatasetfunction,width=110 , height=50 ,text="Turn Your Dataset into Dict" , command=datatodict)
-btnmenudata1.place(x=60, y=80,)
-btnmenudata2 = customtkinter.CTkButton(master=menudatasetfunction,width=100 , height=50 ,text="Turn Your Dataset into Chart ",command=datatofigure)
-btnmenudata2.place(x=60, y=210,)
 
 ##############################
-## frame dataset chart
+## frame dataset chart number 2
 ##############################
 
-menudatasetfigure = customtkinter.CTkFrame(master=app , width=1200 ,height=700, corner_radius=16 ,) 
-btnmenudata1 = customtkinter.CTkButton(master=menudatasetfigure,width=100 , height=50 ,text="Calories by Cheese" , command=caloriesbycheese)
-btnmenudata1.place(x=800, y=60,)
-btnmenudata2 = customtkinter.CTkButton(master=menudatasetfigure,width=100 , height=50 ,text="Sodium by Cheese" , command=caloriesbycheese1)
-btnmenudata2.place(x=200, y=60,)
+datasetnum2 = customtkinter.CTkFrame(master=button , width=280 ,height=330, corner_radius=16 ,)
+datasettext1 = customtkinter.CTkLabel(master=datasetnum2 ,text="Choose 1 or 2 Datas" , font=('century gothic', 14) )
+datasettext1.place(x=70, y=10,)
+datasettext2 = customtkinter.CTkLabel(master=datasetnum2 ,text="Specify Your Data" , font=('century gothic', 14) )
+datasettext2.place(x=70, y=130,)
+choix1 = customtkinter.CTkOptionMenu(master=datasetnum2,values=countries )
+choix1.place(x=70, y=40,)
+choix11 = customtkinter.CTkOptionMenu(master=datasetnum2,values=countries )
+choix11.place(x=70, y=70,)
+btndatasetnum3 = customtkinter.CTkButton(master=datasetnum2,text="Submit" ,command=submit1)
+btndatasetnum3.place(x=70, y=100,)
 
 
 
@@ -561,13 +632,9 @@ btnback6.place(x=10 , y=10)
 my_image7 = ImageTk.PhotoImage(Image.open('backbtn2.png').resize((30,30)))
 btnback7 = customtkinter.CTkButton(caesar_ascii, image=my_image7 , text="" ,width=40, fg_color="#2B2B2B" ,bg_color="#2B2B2B" ,hover_color="#2B2B2B" ,command=back7)
 btnback7.place(x=10 , y=10)
-my_image13 = ImageTk.PhotoImage(Image.open('backbtn2.png').resize((30,30)))
-btnback13 = customtkinter.CTkButton(menudatasetfunction, image=my_image13 , text="" ,width=40, fg_color="#2B2B2B" ,bg_color="#2B2B2B" ,hover_color="#2B2B2B" ,command=back13)
-btnback13.place(x=10 , y=10)
-my_image14 = ImageTk.PhotoImage(Image.open('backbtn2.png').resize((30,30)))
-btnback14 = customtkinter.CTkButton(menudatasetfigure, image=my_image14 , text="" ,width=40, fg_color="#2B2B2B" ,bg_color="#2B2B2B" ,hover_color="#2B2B2B" ,command=back14)
-btnback14.place(x=10 , y=10)
-
+my_image15 = ImageTk.PhotoImage(Image.open('backbtn2.png').resize((30,30)))
+btnback15 = customtkinter.CTkButton(datasetnum2, image=my_image15 , text="" ,width=40, fg_color="#2B2B2B" ,bg_color="#2B2B2B" ,hover_color="#2B2B2B" ,command=back15)
+btnback15.place(x=10 , y=10)
 
 
 

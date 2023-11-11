@@ -1,12 +1,15 @@
 import re
 import random
 import string
-import maskpass
 import os
-import hashlib
+from bs4 import BeautifulSoup
+import requests
+import pandas as pd
+
+
+
 
 emailtest = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
-
 #retourne le length du fichier
 def file_len(filename):
     with open(filename) as f:
@@ -85,7 +88,7 @@ def genererpass():
     while True :
         test='1'
         pwd=""
-        x=random.randint(6,8)
+        x=random.randint(8,10)
         for i in range(x) :
             p=random.randint(1,4)
             if(p==1):
@@ -141,6 +144,8 @@ def ciphercaesarASCII(a, b):
     for i in a:
         if i.isalpha():
             result+=chr((ord(i) + int(b) - ord('A')) % 26 + ord('A'))
+        elif i.isdigit() :
+            result+=chr((ord(i) -ord('0') +int(b)) % 10 + ord('0'))
         else:
             result+=i
     return result
@@ -150,9 +155,36 @@ def ciphercaesarASCII2(a, b):
     a = a.upper()
     for i in a:
         if i.isalpha():
-            result+=chr((ord(i) - int(b) - ord('A')) % 26 + ord('A'))      
+            result+=chr((ord(i) - int(b) - ord('A')) % 26 + ord('A'))     
+        elif i.isdigit() :
+            result+=chr((ord(i) -ord('0') - int(b)) % 10 + ord('0'))             
         else:
             result+=i
     return result
+
+
+def getcolumn(x) :
+    url = "https://en.wikipedia.org/wiki/List_of_largest_companies_in_Canada"
+    page =  requests.get(url)
+    soup = BeautifulSoup(page.text , 'html')
+    table = soup.find_all('table') [1]
+    columntitles = table.find_all('th')
+    columntitle = []
+    for title in columntitles :
+        columntitle.append(title.text.strip()) 
+    df = pd.DataFrame(columns = columntitle)
+    
+    columndatas = table.find_all('tr')
+    for ligne in columndatas[1:]:
+        ligne = ligne.find_all('td')
+        lignedata = []
+        for data in ligne :
+            lignedata.append(data.text.strip()) 
+            length = len(df)
+            df.loc[length] = lignedata
+
+
+    
+
 
 
